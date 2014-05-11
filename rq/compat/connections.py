@@ -1,15 +1,15 @@
-# -*- coding: utf-8 -*-
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
-from functools import partial
+#coding=utf8
 
 from redis import Redis, StrictRedis
+from functools import partial
 
 
 def fix_return_type(func):
     # deliberately no functools.wraps() call here, since the function being
     # wrapped is a partial, which has no module
+
+    # 只是把原来执行函数之后返回 None 的方法装饰成 返回 -1，
+    # 用于确保下面 patch_connection() 中的 connection._ttl() 返回 -1，表示永不过期
     def _inner(*args, **kwargs):
         value = func(*args, **kwargs)
         if value is None:
@@ -28,6 +28,7 @@ def patch_connection(connection):
         return connection
 
     if isinstance(connection, Redis):
+        # TODO: why？把 Redis 对象的方法重置成 StrictRedis 的
         connection._setex = partial(StrictRedis.setex, connection)
         connection._lrem = partial(StrictRedis.lrem, connection)
         connection._zadd = partial(StrictRedis.zadd, connection)

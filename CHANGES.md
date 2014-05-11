@@ -1,35 +1,5 @@
-### 0.4.4
-(May 7th, 2014)
-
-- Properly declare redis dependency.
-- Fix a NameError regression that was introduced in 0.4.3.
-
-
-### 0.4.3
-(May 6th, 2014)
-
-- Make job and queue classes overridable. Thanks, Marko!
-- Don't require connection for @job decorator at definition time. Thanks, Sasha!
-- Syntactic code cleanup.
-
-
-### 0.4.2
-(April 28th, 2014)
-
-- Add missing depends_on kwarg to @job decorator.  Thanks, Sasha!
-
-
-### 0.4.1
-(April 22nd, 2014)
-
-- Fix bug where RQ 0.4 workers could not unpickle/process jobs from RQ < 0.4.
-
-
 ### 0.4.0
-(April 22nd, 2014)
-
-- Emptying the failed queue from the command line is now as simple as running
-  `rqinfo -X` or `rqinfo --empty-failed-queue`.
+(not released yet)
 
 - Job data is unpickled lazily. Thanks, Malthe!
 

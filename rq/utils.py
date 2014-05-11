@@ -5,9 +5,6 @@ Miscellaneous helper functions.
 The formatter for ANSI colored console output is heavily based on Pygments
 terminal colorizing code, originally by Georg Brandl.
 """
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import importlib
 import datetime
 import logging
@@ -20,9 +17,7 @@ from .compat import is_python_version
 def gettermsize():
     def ioctl_GWINSZ(fd):
         try:
-            import fcntl
-            import struct
-            import termios
+            import fcntl, termios, struct  # noqa
             cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
         except:
             return None
@@ -170,7 +165,10 @@ class ColorizingStreamHandler(logging.StreamHandler):
 
 
 def import_attribute(name):
-    """Return an attribute from a dotted path name (e.g. "path.to.func")."""
+    """Return an attribute from a dotted path name (e.g. "path.to.func").
+
+    返回指定路径下模块的属性
+    """
     module_name, attribute = name.rsplit('.', 1)
     module = importlib.import_module(module_name)
     return getattr(module, attribute)
@@ -181,51 +179,20 @@ def utcnow():
 
 
 def utcformat(dt):
-    return dt.strftime(u'%Y-%m-%dT%H:%M:%SZ')
+    return dt.strftime(u"%Y-%m-%dT%H:%M:%SZ")
 
 
 def utcparse(string):
-    try:
-        return datetime.datetime.strptime(string, '%Y-%m-%dT%H:%M:%SZ')
-    except ValueError:
-        # This catches RQ < 0.4 datetime format
-        return datetime.datetime.strptime(string, '%Y-%m-%dT%H:%M:%S.%f+00:00')
+    return datetime.datetime.strptime(string, "%Y-%m-%dT%H:%M:%SZ")
 
 
-def first(iterable, default=None, key=None):
-    """
-    Return first element of `iterable` that evaluates true, else return None
-    (or an optional default value).
+############### add by hao on 2014-02-17 ###############
 
-    >>> first([0, False, None, [], (), 42])
-    42
+def funclog():
+    f0 = sys._getframe(1) # funclog 的调用者
+    f1 = sys._getframe(2) # funclog 的调用者的上一层
 
-    >>> first([0, False, None, [], ()]) is None
-    True
+    formatstr = '{0:-<40}{1:->5}   {2:<40}\r{3:-<40}{4:->5}   {5:<20}\n'
+    print formatstr.format(f1.f_code.co_filename, f1.f_lineno, f1.f_code.co_name, \
+                           f0.f_code.co_filename, f0.f_lineno, f0.f_code.co_name)
 
-    >>> first([0, False, None, [], ()], default='ohai')
-    'ohai'
-
-    >>> import re
-    >>> m = first(re.match(regex, 'abc') for regex in ['b.*', 'a(.*)'])
-    >>> m.group(1)
-    'bc'
-
-    The optional `key` argument specifies a one-argument predicate function
-    like that used for `filter()`.  The `key` argument, if supplied, must be
-    in keyword form.  For example:
-
-    >>> first([1, 1, 3, 4, 5], key=lambda x: x % 2 == 0)
-    4
-
-    """
-    if key is None:
-        for el in iterable:
-            if el:
-                return el
-    else:
-        for el in iterable:
-            if key(el):
-                return el
-
-    return default

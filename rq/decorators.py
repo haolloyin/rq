@@ -1,13 +1,8 @@
-# -*- coding: utf-8 -*-
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 from functools import wraps
-
-from rq.compat import string_types
-
 from .queue import Queue
+from .connections import resolve_connection
 from .worker import DEFAULT_RESULT_TTL
+from rq.compat import string_types
 
 
 class job(object):
@@ -25,7 +20,7 @@ class job(object):
             simple_add.delay(1, 2) # Puts simple_add function into queue
         """
         self.queue = queue
-        self.connection = connection
+        self.connection = resolve_connection(connection)
         self.timeout = timeout
         self.result_ttl = result_ttl
 
@@ -36,11 +31,7 @@ class job(object):
                 queue = Queue(name=self.queue, connection=self.connection)
             else:
                 queue = self.queue
-            if 'depends_on' in kwargs:
-                depends_on = kwargs.pop('depends_on')
-            else:
-                depends_on = None
             return queue.enqueue_call(f, args=args, kwargs=kwargs,
-                                      timeout=self.timeout, result_ttl=self.result_ttl, depends_on=depends_on)
+                                      timeout=self.timeout, result_ttl=self.result_ttl)
         f.delay = delay
         return f

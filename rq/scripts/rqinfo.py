@@ -1,18 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
-import argparse
-import os
 import sys
+import os
 import time
-
+import argparse
 from redis.exceptions import ConnectionError
-from rq import get_failed_queue, Queue, Worker
-from rq.scripts import (add_standard_arguments, read_config_file,
-                        setup_default_arguments, setup_redis)
+from rq import Queue, Worker
 from rq.utils import gettermsize, make_colorizer
+from rq.scripts import add_standard_arguments
+from rq.scripts import setup_redis
+from rq.scripts import read_config_file
+from rq.scripts import setup_default_arguments
 
 red = make_colorizer('darkred')
 green = make_colorizer('darkgreen')
@@ -20,7 +18,10 @@ yellow = make_colorizer('darkyellow')
 
 
 def pad(s, pad_to_length):
-    """Pads the given string to the given length."""
+    """Pads the given string to the given length.
+
+    将指定字符串向右扩充到指定的长度，例如：'%-20s' % (s,)
+    """
     return ('%-' + '%ds' % pad_to_length) % (s,)
 
 
@@ -80,8 +81,8 @@ def show_queues(args):
 
 
 def show_workers(args):
-    if len(args.queues):
-        qs = list(map(Queue, args.queues))
+    if len(args.queues): # 默认不传 queues 选项，则 len(args.queues) = 0 = False
+        qs = list(map(Queue, args.queues)) # 实例化
 
         def any_matching_queue(worker):
             def queue_matches(q):
@@ -103,22 +104,22 @@ def show_workers(args):
         for w in ws:
             worker_queues = filter_queues(w.queue_names())
             if not args.raw:
-                print('%s %s: %s' % (w.name, state_symbol(w.get_state()), ', '.join(worker_queues)))
+                print('%s %s: %s' % (w.name, state_symbol(w.state), ', '.join(worker_queues)))
             else:
-                print('worker %s %s %s' % (w.name, w.get_state(), ','.join(worker_queues)))
+                print('worker %s %s %s' % (w.name, w.state, ','.join(worker_queues)))
     else:
         # Create reverse lookup table
         queues = dict([(q, []) for q in qs])
         for w in ws:
             for q in w.queues:
-                if q not in queues:
+                if not q in queues:
                     continue
                 queues[q].append(w)
 
         max_qname = max(map(lambda q: len(q.name), queues.keys())) if queues else 0
         for q in queues:
             if queues[q]:
-                queues_str = ", ".join(sorted(map(lambda w: '%s (%s)' % (w.name, state_symbol(w.get_state())), queues[q])))  # noqa
+                queues_str = ", ".join(sorted(map(lambda w: '%s (%s)' % (w.name, state_symbol(w.state)), queues[q])))
             else:
                 queues_str = '–'
             print('%s %s' % (pad(q.name + ':', max_qname + 1), queues_str))
@@ -140,21 +141,21 @@ def show_both(args):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='RQ command-line monitor.')
-    add_standard_arguments(parser)
+    add_standard_arguments(parser) # 添加命令行标准选项
     parser.add_argument('--path', '-P', default='.', help='Specify the import path.')
-    parser.add_argument('--interval', '-i', metavar='N', type=float, default=2.5, help='Updates stats every N seconds (default: don\'t poll)')  # noqa
-    parser.add_argument('--raw', '-r', action='store_true', default=False, help='Print only the raw numbers, no bar charts')  # noqa
-    parser.add_argument('--only-queues', '-Q', dest='only_queues', default=False, action='store_true', help='Show only queue info')  # noqa
-    parser.add_argument('--only-workers', '-W', dest='only_workers', default=False, action='store_true', help='Show only worker info')  # noqa
-    parser.add_argument('--by-queue', '-R', dest='by_queue', default=False, action='store_true', help='Shows workers by queue')  # noqa
-    parser.add_argument('--empty-failed-queue', '-X', dest='empty_failed_queue', default=False, action='store_true', help='Empties the failed queue, then quits')  # noqa
+    parser.add_argument('--interval', '-i', metavar='N', type=float, default=2.5, help='Updates stats every N seconds (default: don\'t poll)')
+    parser.add_argument('--raw', '-r', action='store_true', default=False, help='Print only the raw numbers, no bar charts')
+    parser.add_argument('--only-queues', '-Q', dest='only_queues', default=False, action='store_true', help='Show only queue info')
+    parser.add_argument('--only-workers', '-W', dest='only_workers', default=False, action='store_true', help='Show only worker info')
+    parser.add_argument('--by-queue', '-R', dest='by_queue', default=False, action='store_true', help='Shows workers by queue')
     parser.add_argument('queues', nargs='*', help='The queues to poll')
     return parser.parse_args()
 
 
 def interval(val, func, args):
+    """不断循环获取 RQ 的信息"""
     while True:
-        if val and sys.stdout.isatty():
+        if val and sys.stdout.isatty(): # 如果 stdout 是命令行终端，清屏
             os.system('clear')
         func(args)
         if val and sys.stdout.isatty():
@@ -167,29 +168,24 @@ def main():
     args = parse_args()
 
     if args.path:
-        sys.path = args.path.split(':') + sys.path
+        sys.path = args.path.split(':') + sys.path # TODO: 这里为啥用 : 分隔？
 
     settings = {}
     if args.config:
-        settings = read_config_file(args.config)
+        settings = read_config_file(args.config) # 包含 RQ 配置的 .py 文件，选项全部是大写
 
     setup_default_arguments(args, settings)
 
     setup_redis(args)
-
     try:
-        if args.empty_failed_queue:
-            num_jobs = get_failed_queue().empty()
-            print('{} jobs removed from failed queue'.format(num_jobs))
+        if args.only_queues:
+            func = show_queues
+        elif args.only_workers:
+            func = show_workers
         else:
-            if args.only_queues:
-                func = show_queues
-            elif args.only_workers:
-                func = show_workers
-            else:
-                func = show_both
+            func = show_both
 
-            interval(args.interval, func, args)
+        interval(args.interval, func, args)
     except ConnectionError as e:
         print(e)
         sys.exit(1)

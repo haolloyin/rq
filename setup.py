@@ -17,7 +17,7 @@ def get_version():
 
 
 def get_dependencies():
-    deps = ['redis >= 2.7.0']
+    deps = ['redis >= 2.4.13']
     if sys.version_info < (2, 7) or \
             (sys.version_info >= (3, 0) and sys.version_info < (3, 1)):
         deps += ['importlib']
@@ -65,8 +65,6 @@ setup(
         'Operating System :: MacOS',
         'Operating System :: Unix',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 3',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Internet',
         'Topic :: Scientific/Engineering',

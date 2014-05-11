@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
-from rq import Connection, Queue
-
-from tests import find_empty_redis_database, RQTestCase
+from tests import RQTestCase, find_empty_redis_database
 from tests.fixtures import do_nothing
+from rq import Queue
+from rq import Connection
 
 
 def new_connection():

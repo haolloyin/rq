@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+#coding=utf-8
 
 import sys
 
@@ -21,17 +19,17 @@ else:
         """Class decorator that fills in missing ordering methods"""
         convert = {
             '__lt__': [('__gt__', lambda self, other: other < self),
-                       ('__le__', lambda self, other: not other < self),
-                       ('__ge__', lambda self, other: not self < other)],
+                    ('__le__', lambda self, other: not other < self),
+                    ('__ge__', lambda self, other: not self < other)],
             '__le__': [('__ge__', lambda self, other: other <= self),
-                       ('__lt__', lambda self, other: not other <= self),
-                       ('__gt__', lambda self, other: not self <= other)],
+                    ('__lt__', lambda self, other: not other <= self),
+                    ('__gt__', lambda self, other: not self <= other)],
             '__gt__': [('__lt__', lambda self, other: other > self),
-                       ('__ge__', lambda self, other: not other > self),
-                       ('__le__', lambda self, other: not self > other)],
+                    ('__ge__', lambda self, other: not other > self),
+                    ('__le__', lambda self, other: not self > other)],
             '__ge__': [('__le__', lambda self, other: other >= self),
-                       ('__gt__', lambda self, other: not other >= self),
-                       ('__lt__', lambda self, other: not self >= other)]
+                    ('__gt__', lambda self, other: not other >= self),
+                    ('__lt__', lambda self, other: not self >= other)]
         }
         roots = set(dir(cls)) & set(convert)
         if not roots:
@@ -39,17 +37,29 @@ else:
         root = max(roots)       # prefer __lt__ to __le__ to __gt__ to __ge__
         for opname, opfunc in convert[root]:
             if opname not in roots:
-                opfunc.__name__ = str(opname)
+                opfunc.__name__ = opname
                 opfunc.__doc__ = getattr(int, opname).__doc__
                 setattr(cls, opname, opfunc)
         return cls
 
 
-PY2 = sys.version_info[0] == 2
-if not PY2:
-    # Python 3.x and up
-    text_type = str
+PY2 = sys.version_info[0] < 3
+
+if PY2:
+    # Python 2.x 有 str 和 unicode 两种字符串，默认 text_type 为 unicode
+    string_types = (str, unicode)
+    text_type = unicode
+
+    def as_text(v):
+        return v
+
+    def decode_redis_hash(h):
+        return h
+
+else:
+    # Python 3 以上只有 str 字符串，默认 text_type 为 str
     string_types = (str,)
+    text_type = str
 
     def as_text(v):
         if v is None:
@@ -63,13 +73,3 @@ if not PY2:
 
     def decode_redis_hash(h):
         return dict((as_text(k), h[k]) for k in h)
-else:
-    # Python 2.x
-    text_type = unicode
-    string_types = (str, unicode)
-
-    def as_text(v):
-        return v
-
-    def decode_redis_hash(h):
-        return h

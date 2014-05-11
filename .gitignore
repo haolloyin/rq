@@ -7,3 +7,10 @@
 /.tox
 /dist
 /build
+
+
+# PyCharm
+.idea
+
+# Mac OS X
+.DS_Store

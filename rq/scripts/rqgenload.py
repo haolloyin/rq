@@ -1,11 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import optparse
-
-from rq import dummy, Queue, use_connection
+from rq import use_connection, Queue
+from rq import dummy
 
 
 def parse_args():
@@ -13,7 +9,6 @@ def parse_args():
     parser.add_option('-n', '--count', type='int', dest='count', default=1)
     opts, args = parser.parse_args()
     return (opts, args, parser)
-
 
 def main():
     import sys
@@ -26,12 +21,12 @@ def main():
     queues = ('default', 'high', 'low')
 
     sample_calls = [
-        (dummy.do_nothing, [], {}),
-        (dummy.sleep, [1], {}),
-        (dummy.fib, [8], {}),              # normal result
-        (dummy.fib, [24], {}),             # takes pretty long
-        (dummy.div_by_zero, [], {}),       # 5 / 0 => div by zero exc
-        (dummy.random_failure, [], {}),    # simulate random failure (handy for requeue testing)
+            (dummy.do_nothing, [], {}),
+            (dummy.sleep, [1], {}),
+            (dummy.fib, [8], {}),              # normal result
+            (dummy.fib, [24], {}),             # takes pretty long
+            (dummy.div_by_zero, [], {}),       # 5 / 0 => div by zero exc
+            (dummy.random_failure, [], {}),    # simulate random failure (handy for requeue testing)
     ]
 
     for i in range(opts.count):
@@ -41,27 +36,28 @@ def main():
         q = Queue(random.choice(queues))
         q.enqueue(f, *args, **kwargs)
 
-        # q = Queue('foo')
-        # q.enqueue(do_nothing)
-        # q.enqueue(sleep, 3)
-        # q = Queue('bar')
-        # q.enqueue(yield_stuff)
-        # q.enqueue(do_nothing)
-        # q.enqueue(do_nothing)
-        # q.enqueue(do_nothing)
-        # q.enqueue(do_nothing)
-        # q.enqueue(do_nothing)
-        # q.enqueue(do_nothing)
-        # q.enqueue(do_nothing)
-        # q.enqueue(do_nothing)
-        # q.enqueue(do_nothing)
-        # q.enqueue(do_nothing)
-        # q.enqueue(do_nothing)
-        # q.enqueue(do_nothing)
-        # q.enqueue(do_nothing)
-        # q.enqueue(do_nothing)
-        # q.enqueue(do_nothing)
-        # q.enqueue(do_nothing)
+        #q = Queue('foo')
+        #q.enqueue(do_nothing)
+        #q.enqueue(sleep, 3)
+        #q = Queue('bar')
+        #q.enqueue(yield_stuff)
+        #q.enqueue(do_nothing)
+        #q.enqueue(do_nothing)
+        #q.enqueue(do_nothing)
+        #q.enqueue(do_nothing)
+        #q.enqueue(do_nothing)
+        #q.enqueue(do_nothing)
+        #q.enqueue(do_nothing)
+        #q.enqueue(do_nothing)
+        #q.enqueue(do_nothing)
+        #q.enqueue(do_nothing)
+        #q.enqueue(do_nothing)
+        #q.enqueue(do_nothing)
+        #q.enqueue(do_nothing)
+        #q.enqueue(do_nothing)
+        #q.enqueue(do_nothing)
+        #q.enqueue(do_nothing)
 
 if __name__ == '__main__':
     main()
+
